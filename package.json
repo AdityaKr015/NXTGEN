@@ -43,6 +43,7 @@
     "vitest": "4.1.10"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.0",
     "@octokit/rest": "^22.0.1",
     "@octokit/webhooks": "^14.2.0",
     "bullmq": "^6.0.9",

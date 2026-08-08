@@ -78,7 +78,7 @@ pnpm install
 cp .env.example .env
 # Edit .env with your Discord token, database URL, etc.
 
-# 5. Start PostgreSQL and Redis (if using Docker)
+# 5. Start PostgreSQL and Redis (using the provided docker-compose.yml)
 docker compose up -d postgres redis
 
 # 6. Run database migrations

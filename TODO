@@ -1,0 +1,33 @@
+# NEXTGEN Bot - Feature Ideas & Roadmap
+
+Given the powerful stack (PostgreSQL, Redis, BullMQ, Hono, discord.js), NEXTGEN is perfectly positioned to handle heavy workloads, scheduled tasks, and complex state. Here are some ideas for what to build next:
+
+## Phase 1: Integrations (Current)
+- [ ] **GitHub PR Tracking** (Webhook-based notifications for opened, closed, merged, and reviewed PRs).
+- [ ] **GitHub Issues Integration** (Create issues from Discord messages via context menu).
+
+## Phase 2: Moderation & Server Management
+- [ ] **Advanced Auto-Moderation**: Anti-spam, anti-phishing link detection, and mass-mention prevention.
+- [ ] **Warning & Strike System**: Keep track of user infractions in PostgreSQL. Configurable escalations (e.g., 3 strikes = 1 hour timeout).
+- [ ] **Audit Logging**: Track deleted/edited messages, voice channel joins/leaves, and role changes in a dedicated admin channel.
+- [ ] **Auto-Roles & Onboarding**: Automatically assign roles when a user joins, or prompt them with Discord buttons to pick their own roles (Reaction/Button Roles).
+
+## Phase 3: Community Support
+- [ ] **Ticket System**: Users can click a button to open a private support channel.
+- [ ] **Ticket Transcripts**: When a ticket is closed, automatically save a transcript to a secure web dashboard (powered by Hono) or as a `.html` file upload.
+- [ ] **Feedback/Suggestion System**: Users submit ideas, which are posted to a suggestions channel for upvote/downvote reactions.
+
+## Phase 4: Utilities
+- [ ] **Reminders**: `/remindme in 2 hours to check logs` (Perfect use case for BullMQ delayed jobs).
+- [ ] **Polls & Voting**: Advanced multi-option polls with scheduled end times.
+- [ ] **Custom Commands**: Let server admins create their own simple text-response commands (e.g., `/ip` replies with a server IP).
+- [ ] **Scheduled Announcements**: Let admins schedule a message to be sent at a specific date/time (handled by BullMQ).
+
+## Phase 5: Web Dashboard (maybe)
+- [ ] **Web Interface**: Since Hono is already running the API, serve a React/Vue dashboard allowing admins to configure the bot, view moderation logs, and customize settings without using slash commands.
+
+## Phase 6: Engagement & Economy
+- [ ] **Leveling & XP System**: Users gain XP for chatting and voice activity. 
+- [ ] **Level Rewards**: Automatically grant roles when users reach specific levels.
+- [ ] **Economy System**: Virtual currency, daily rewards, and a server shop (can be globally shared or per-server since you use Postgres).
+- [ ] **Global Leaderboards**: Web dashboard (served via Hono) showing the most active users across the server.

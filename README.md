@@ -233,14 +233,14 @@ NODE_ENV=development
 
 ### 4 — Infrastructure (PostgreSQL + Redis)
 
-The bot requires PostgreSQL (`src/core/database.ts`) and Redis (`src/core/redis.ts`). The quickest way is Docker:
+The bot requires PostgreSQL (`src/core/database.ts`) and Redis (`src/core/redis.ts`). The quickest way to get these running is by using the provided `docker-compose.yml` file:
 
 ```bash
-# Start only the infrastructure services
+# Start only the infrastructure services (PostgreSQL and Redis)
 docker compose up -d postgres redis
 ```
 
-Or, if you already have PostgreSQL and Redis running locally, just make sure `DATABASE_URL` and `REDIS_URL` in your `.env` point to them.
+Or, if you already have PostgreSQL and Redis running locally without Docker, just make sure `DATABASE_URL` and `REDIS_URL` in your `.env` point to them.
 
 ### 5 — Database Migrations
 
@@ -297,24 +297,20 @@ On successful startup you should see output from the Pino logger (`src/core/logg
 
 ## Docker
 
-The easiest way to run everything (bot + PostgreSQL + Redis) together:
+The `docker-compose.yml` provides the required infrastructure (PostgreSQL + Redis) to run the bot locally:
 
 ```bash
-# Build and start all services
+# Start the infrastructure services
 docker compose up -d
 
-# View logs
-docker compose logs -f bot
-
-# Stop everything
+# Stop everything and remove containers
 docker compose down
 ```
 
-The `docker-compose.yml` defines three services:
+The `docker-compose.yml` defines two services:
 
 | Service      | Port  | Description                    |
 | ------------ | ----- | ------------------------------ |
-| `bot`        | 3000  | NEXTGEN bot + Hono API server   |
 | `postgres`   | 5432  | PostgreSQL database            |
 | `redis`      | 6379  | Redis (BullMQ backend + cache) |
 
@@ -476,6 +472,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 > [!NOTE]
 > This roadmap is a living document. Features are added based on community feedback and contributor interest. Have an idea? Open an issue!
+> Read [TODO](TODO) for some pre-thought ideas & features.
 
 ---
 
