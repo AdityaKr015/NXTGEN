@@ -1,0 +1,83 @@
+# ============================================
+# Validates PR title follows Conventional Commits
+# and enforces contribution guidelines.
+# ============================================
+
+name: PR Checks
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - '.gitignore'
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title:
+    name: "PR → Title Convention"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title follows Conventional Commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+
+          # Conventional Commits pattern:
+          #   type(scope): description
+          #   type: description
+          PATTERN="^(feat|fix|docs|style|refactor|test|chore|perf|ci|revert)(\((client|server|db|docker|deps|config)\))?: .{3,}$"
+
+          if [[ ! "$TITLE" =~ $PATTERN ]]; then
+            echo "[!!!] PR title does not follow Conventional Commits format."
+            echo ""
+            echo "Expected format:"
+            echo "  type(scope): description"
+            echo ""
+            echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, revert"
+            echo "Valid scopes: client, server, db, docker, deps, config"
+            echo ""
+            echo "Examples:"
+            echo "  feat(client): add member profile cards"
+            echo "  fix(server): resolve auth middleware race condition"
+            echo "  docs: update contributing guide"
+            echo ""
+            echo "Your title: \"$TITLE\""
+            exit 1
+          fi
+
+          echo "[OK] PR title follows Conventional Commits: \"$TITLE\""
+
+  pr-size:
+    name: "PR → Size Check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR size
+        run: |
+          # Get the diff stats
+          ADDITIONS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json additions -q '.additions')
+          DELETIONS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json deletions -q '.deletions')
+          CHANGED_FILES=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json changedFiles -q '.changedFiles')
+          TOTAL=$((ADDITIONS + DELETIONS))
+
+          echo "[PR Stats]:"
+          echo "  Files changed: $CHANGED_FILES"
+          echo "  Additions:     +$ADDITIONS"
+          echo "  Deletions:     -$DELETIONS"
+          echo "  Total changes: $TOTAL"
+          echo ""
+
+          # Warn (not fail) on very large PRs
+          if [[ $TOTAL -gt 1000 ]]; then
+            echo "[WARNING]: This is a large PR ($TOTAL lines changed)."
+            echo "Consider breaking it into smaller, focused PRs for easier review."
+          elif [[ $TOTAL -gt 500 ]]; then
+            echo "[NOTE]: This PR has $TOTAL lines changed. Keep PRs focused when possible."
+          else
+            echo "[OK] PR size looks good."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
