@@ -275,9 +275,9 @@ The entry point is `src/index.ts`, which boots up the discord.js client (`src/co
 # Development mode (with hot-reloading)
 pnpm dev
 
-# Production mode
+# Production mode (Test the compiled build)
 pnpm build
-pnpm start
+node dist/index.js
 ```
 
 On successful startup you should see output from the Pino logger (`src/core/logger.ts`):

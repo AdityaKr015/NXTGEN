@@ -86,6 +86,10 @@ pnpm db:migrate
 
 # 7. Start the bot in development mode
 pnpm dev
+
+# 8. (Optional) Test the compiled production build locally
+pnpm build
+node dist/index.js
 ```
 
 > **Tip:** If you only need to work on a feature that doesn't require Discord, you can skip the `DISCORD_TOKEN` and work with the Hono API server and tests in isolation.
