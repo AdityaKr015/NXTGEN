@@ -29,7 +29,7 @@ jobs:
           # Conventional Commits pattern:
           #   type(scope): description
           #   type: description
-          PATTERN="^(feat|fix|docs|style|refactor|test|chore|perf|ci|revert)(\((github|discord|api|db|queue|config|docker|deps)\))?: .{3,}$"
+          PATTERN="^(feat|fix|docs|style|refactor|test|chore|perf|ci|revert|build)(\((github|discord|api|db|queue|config|docker|deps)\))?: .{3,}$"
 
           if [[ ! "$TITLE" =~ $PATTERN ]]; then
             echo "[!!!] PR title does not follow Conventional Commits format."
@@ -37,7 +37,7 @@ jobs:
             echo "Expected format:"
             echo "  type(scope): description"
             echo ""
-            echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, revert"
+            echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, revert, build"
             echo "Valid scopes: github, discord, api, db, queue, config, docker, deps"
             echo ""
             echo "Examples:"
