@@ -13,7 +13,7 @@ import { githubWebhookConfigs } from "@/features/github/schema.js";
 export const data = new SlashCommandBuilder()
   .setName("github-setup")
   .setDescription("Configure the channel for GitHub PR notifications")
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .addChannelOption((option) =>
     option
       .setName("channel")
