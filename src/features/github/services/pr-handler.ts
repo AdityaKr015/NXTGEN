@@ -137,6 +137,8 @@ export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Pro
         authorAvatarUrl: prData.authorAvatarUrl,
         state: pr.state,
         url: prData.url,
+        headSha: prData.headSha,
+        mergeCommitSha: prData.mergeCommitSha,
       })
       .onConflictDoUpdate({
         target: [githubPullRequests.prNumber, githubPullRequests.repoFullName],
@@ -146,6 +148,8 @@ export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Pro
           authorAvatarUrl: prData.authorAvatarUrl,
           state: pr.state,
           url: prData.url,
+          headSha: prData.headSha,
+          mergeCommitSha: prData.mergeCommitSha,
           updatedAt: new Date(),
         },
       });

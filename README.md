@@ -368,9 +368,9 @@ NEXTGEN/
 
 | Command                               | Description                                          |
 | ------------------------------------- | ---------------------------------------------------- |
-| `/github track <owner/repo>`          | Link a GitHub repository to the current channel      |
-| `/github untrack <owner/repo>`        | Remove a repository link from the current channel    |
-| `/github status`                      | List all repositories tracked in the current channel |
+| `/github-setup`                       | Configure the channel for GitHub PR notifications (Admin only) |
+| `/pr-search <query> [state]`          | Search for past PRs by title, author, or commit hash |
+| `/pr-stats [username]`                | View a user's PR stats or the global PR leaderboard  |
 
 ---
 
@@ -414,7 +414,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 - [x] Project scaffolding and architecture
 - [x] GitHub PR tracking via webhooks (Basic Sync)
-- [ ] GitHub PR tracking — BullMQ background worker & Octokit enrichment
+- [x] GitHub PR tracking — BullMQ background worker & Octokit enrichment
 - [x] Slash command framework
 - [x] Docker Compose setup
 - [x] CI/CD pipeline (GitHub Actions)

@@ -19,6 +19,8 @@ export const githubPullRequests = pgTable(
     authorAvatarUrl: text("author_avatar_url"),
     state: text("state").notNull(),
     url: text("url").notNull(),
+    headSha: text("head_sha"),
+    mergeCommitSha: text("merge_commit_sha"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
