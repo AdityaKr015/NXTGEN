@@ -11,6 +11,16 @@ import {
   type PREventData,
 } from "@/features/github/embeds/pr-embed.js";
 import { githubPullRequests, githubWebhookConfigs } from "@/features/github/schema.js";
+import {
+  type CheckRunSummary,
+  GitHubService,
+  type ReviewSummary,
+} from "@/features/github/services/github.service.js";
+
+interface EnrichedPRData {
+  checks: CheckRunSummary;
+  reviews: ReviewSummary;
+}
 
 export interface GitHubPRWebhookPayload {
   action: string;
@@ -59,6 +69,29 @@ export interface GitHubPRWebhookPayload {
   };
 }
 
+// ponytail: enrichment is best-effort — the webhook payload already has enough to ship the embed,
+// so an Octokit failure (rate limit, missing perms) logs and falls back to raw webhook data
+async function enrichPullRequest(
+  owner: string,
+  repo: string,
+  event: GitHubPRWebhookPayload,
+): Promise<EnrichedPRData | null> {
+  try {
+    const service = new GitHubService();
+    const [checks, reviews] = await Promise.all([
+      service.getCheckRuns(owner, repo, event.pull_request.head.sha),
+      service.getReviews(owner, repo, event.number),
+    ]);
+    return { checks, reviews };
+  } catch (error) {
+    logger.warn(
+      { err: error, pr: event.number, repo: event.repository.full_name },
+      "GitHub enrichment failed, using raw webhook data",
+    );
+    return null;
+  }
+}
+
 export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Promise<void> {
   logger.info(
     { action: event.action, pr: event.number, repo: event.repository.full_name },
@@ -66,6 +99,8 @@ export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Pro
   );
 
   const pr = event.pull_request;
+  const [owner, repo] = event.repository.full_name.split("/");
+  const enrichment = await enrichPullRequest(owner, repo, event);
 
   const prData: PREventData = {
     prNumber: event.number,
@@ -87,6 +122,8 @@ export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Pro
     body: pr.body,
     mergeCommitSha: pr.merge_commit_sha,
     mergedByLogin: pr.merged_by?.login ?? null,
+    checkSummary: enrichment?.checks,
+    reviewSummary: enrichment?.reviews,
   };
 
   try {
