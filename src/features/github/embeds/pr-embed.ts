@@ -25,11 +25,81 @@ export interface PREventData {
   reviewSummary?: ReviewSummary;
 }
 
-/** Truncate PR body to a short preview */
-function bodyPreview(body: string | null): string {
-  if (!body || body.trim().length === 0) return "";
-  const clean = body.replace(/\r\n/g, "\n").split("\n")[0] ?? "";
-  return clean.length > 120 ? `${clean.slice(0, 120)}…` : clean;
+/** Discord limit: 1024 chars per field value */
+const MAX_DESCRIPTION_CHARS = 1024;
+
+// sentinel sentence list, not a full template parser, bodies from other repos without
+// this template degrade to "unchecked boxes dropped", which still clears most PR-checklist noise
+const TEMPLATE_NOISE = [
+  "before submitting your pr",
+  "please review the following checklist",
+  "please include a summary of the changes",
+  "fixes # (",
+];
+
+/** Keep checked boxes and real prose; drop unchecked tasks, images, and template instructions */
+function cleanBody(body: string): string {
+  const withoutImages = body.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
+  const lines = withoutImages.replace(/\r\n/g, "\n").split("\n");
+  const kept = lines.filter((line) => {
+    if (/^\s*-\s*\[\s\]/.test(line)) return false;
+    const lower = line.trim().toLowerCase();
+    return !TEMPLATE_NOISE.some((noise) => lower.startsWith(noise));
+  });
+
+  // Drop screenshot/embeds sections entirely; sub-headings stay inside the section,
+  // only a heading at or above the section's level ends it
+  const noScreenshots: string[] = [];
+  let screenshotLevel = 0;
+  for (const line of kept) {
+    const heading = line.match(/^(#{1,6})\s+/);
+    if (heading) {
+      const level = heading[1].length;
+      if (screenshotLevel > 0 && level <= screenshotLevel) {
+        screenshotLevel = 0;
+      } else if (screenshotLevel === 0 && /screenshot/i.test(line)) {
+        screenshotLevel = level;
+        continue;
+      }
+    }
+    if (screenshotLevel === 0) noScreenshots.push(line);
+  }
+
+  // Drop headings orphaned when their section content was stripped
+  const sections = noScreenshots.filter((line, i) => {
+    if (!/^#{1,6}\s+/.test(line)) return true;
+    const nextContent = noScreenshots.slice(i + 1).find((l) => l.trim() !== "");
+    return nextContent !== undefined && !/^#{1,6}\s+/.test(nextContent.trim());
+  });
+
+  return sections
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** Single Description field, truncated at Discord's field limit with a READ MORE link */
+function descriptionField(
+  body: string | null,
+  prUrl: string,
+): { name: string; value: string } | null {
+  const clean = cleanBody(body ?? "");
+  if (!clean) return null;
+
+  const readMore = `… [READ MORE](${prUrl})`;
+  let value = clean;
+  if (clean.length > MAX_DESCRIPTION_CHARS) {
+    const cut = Math.max(0, MAX_DESCRIPTION_CHARS - readMore.length - 1);
+    if (cut > 0) {
+      value = `${clean.slice(0, cut)}…${readMore}`;
+    } else {
+      // link can't fit (pathological URL length), plain truncation
+      // keeps the 1024-char field invariant instead of a broken link
+      value = `${clean.slice(0, MAX_DESCRIPTION_CHARS - 1)}…`;
+    }
+  }
+
+  return { name: "Description", value };
 }
 
 /** Format branch and commit info line */
@@ -77,9 +147,9 @@ function baseEmbed(data: PREventData, color: number): EmbedBuilder {
     .setFooter({ text: data.repoFullName })
     .setTimestamp();
 
-  const preview = bodyPreview(data.body);
-  if (preview) {
-    embed.addFields({ name: "Description", value: preview });
+  const description = descriptionField(data.body, data.url);
+  if (description) {
+    embed.addFields(description);
   }
 
   const checkLine = checksLine(data);
