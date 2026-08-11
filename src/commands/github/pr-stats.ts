@@ -70,9 +70,10 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         if (row.state === "open") {
           if (row.isDraft) draft += row.total;
           else open += row.total;
+        } else if (row.state === "merged") {
+          merged += row.total;
         } else {
-          if (row.mergeCommitSha) merged += row.total;
-          else closed += row.total;
+          closed += row.total;
         }
       }
 

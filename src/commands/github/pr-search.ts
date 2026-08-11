@@ -80,7 +80,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
                 emoji = "✅";
                 stateText = "Open";
               }
-            } else if (pr.mergeCommitSha) {
+            } else if (pr.state === "merged") {
               emoji = "🟪";
               stateText = "Merged";
             }
