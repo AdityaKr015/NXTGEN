@@ -16,7 +16,11 @@ export const data = new SlashCommandBuilder()
     option
       .setName("state")
       .setDescription("Filter by PR state")
-      .addChoices({ name: "Open", value: "open" }, { name: "Closed", value: "closed" }),
+      .addChoices(
+        { name: "Open", value: "open" },
+        { name: "Closed", value: "closed" },
+        { name: "Merged", value: "merged" }
+      ),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {

@@ -61,3 +61,5 @@ compose.override.yaml
 scratch/
 temp/
 tmp/
+
+scripts/
