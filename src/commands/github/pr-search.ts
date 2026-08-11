@@ -19,7 +19,7 @@ export const data = new SlashCommandBuilder()
       .addChoices(
         { name: "Open", value: "open" },
         { name: "Closed", value: "closed" },
-        { name: "Merged", value: "merged" }
+        { name: "Merged", value: "merged" },
       ),
   );
 
