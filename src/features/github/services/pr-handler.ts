@@ -1,4 +1,5 @@
 import type { EmbedBuilder, TextChannel } from "discord.js";
+import { and, eq } from "drizzle-orm";
 import { client } from "@/core/bot.js";
 import { db } from "@/core/database.js";
 import { logger } from "@/core/logger.js";
@@ -8,9 +9,14 @@ import {
   createPRMergedEmbed,
   createPROpenedEmbed,
   createPRReviewRequestedEmbed,
+  createPRSynchronizedEmbed,
   type PREventData,
 } from "@/features/github/embeds/pr-embed.js";
-import { githubPullRequests, githubWebhookConfigs } from "@/features/github/schema.js";
+import {
+  githubPrMessages,
+  githubPullRequests,
+  githubWebhookConfigs,
+} from "@/features/github/schema.js";
 import {
   type CheckRunSummary,
   GitHubService,
@@ -186,6 +192,9 @@ export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Pro
         embed = createPRLabeledEmbed({ ...prData, label: event.label.name });
       }
       break;
+    case "synchronize":
+      embed = createPRSynchronizedEmbed(prData);
+      break;
     default:
       logger.debug({ action: event.action }, "Unhandled PR action");
       return;
@@ -194,6 +203,39 @@ export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Pro
   if (!embed) return;
 
   try {
+    if (event.action === "synchronize") {
+      // Find all previously sent messages for this PR
+      const messages = await db
+        .select()
+        .from(githubPrMessages)
+        .where(
+          and(
+            eq(githubPrMessages.prNumber, prData.prNumber),
+            eq(githubPrMessages.repoFullName, prData.repoFullName),
+          ),
+        );
+
+      logger.info({ messageCount: messages.length }, "Updating existing PR embeds for synchronize");
+
+      for (const msg of messages) {
+        try {
+          const channel = (await client.channels.fetch(msg.channelId)) as TextChannel | null;
+          if (channel?.isTextBased()) {
+            const discordMsg = await channel.messages.fetch(msg.messageId);
+            if (discordMsg) {
+              await discordMsg.edit({ embeds: [embed] });
+            }
+          }
+        } catch (err) {
+          logger.error(
+            { err, channelId: msg.channelId, messageId: msg.messageId },
+            "Failed to edit embed for synchronize",
+          );
+        }
+      }
+      return;
+    }
+
     const configs = await db.select().from(githubWebhookConfigs);
     logger.info({ configCount: configs.length }, "Sending PR embed to configured channels");
 
@@ -201,7 +243,28 @@ export async function handlePullRequestEvent(event: GitHubPRWebhookPayload): Pro
       try {
         const channel = (await client.channels.fetch(config.channelId)) as TextChannel | null;
         if (channel?.isTextBased()) {
-          await channel.send({ embeds: [embed] });
+          const sentMsg = await channel.send({ embeds: [embed] });
+
+          // Track the message so we can edit it later on synchronize
+          await db
+            .insert(githubPrMessages)
+            .values({
+              prNumber: prData.prNumber,
+              repoFullName: prData.repoFullName,
+              channelId: config.channelId,
+              messageId: sentMsg.id,
+            })
+            .onConflictDoUpdate({
+              target: [
+                githubPrMessages.prNumber,
+                githubPrMessages.repoFullName,
+                githubPrMessages.channelId,
+              ],
+              set: {
+                messageId: sentMsg.id,
+                updatedAt: new Date(),
+              },
+            });
         }
       } catch (err) {
         logger.error({ err, channelId: config.channelId }, "Failed to send embed to channel");
